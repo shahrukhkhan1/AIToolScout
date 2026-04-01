@@ -1,4 +1,4 @@
--- Aura AI Directory - Supabase Schema
+-- AIToolScout Directory - Supabase Schema
 
 -- Categories Table
 CREATE TABLE categories (

@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "shahrukh.khan1766@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidTool(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 500 &&
+             data.category is string &&
+             data.pricing in ['Free', 'Freemium', 'Paid'] &&
+             data.websiteUrl is string && data.websiteUrl.matches("^https?://.*");
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /tools/{toolId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAdmin() && isValidTool(request.resource.data);
+      allow update: if isAdmin() && isValidTool(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId || isAdmin();
+    }
+  }
+}

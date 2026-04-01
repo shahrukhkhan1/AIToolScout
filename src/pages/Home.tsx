@@ -1,21 +1,42 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "motion/react";
-import { TOOLS, CATEGORIES } from "@/src/constants";
+import { CATEGORIES } from "@/src/constants";
 import ToolCard from "@/src/components/ui/ToolCard";
 import SearchBar from "@/src/components/ui/SearchBar";
-import { Sparkles, TrendingUp, Zap, CheckCircle } from "lucide-react";
+import { Sparkles, TrendingUp, Zap, CheckCircle, Loader2 } from "lucide-react";
+import { db, handleFirestoreError, OperationType } from "@/src/lib/firebase";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { AITool } from "@/src/types";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
   const [subscribed, setSubscribed] = useState(false);
+  const [tools, setTools] = useState<AITool[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "tools"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const toolsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as AITool[];
+      setTools(toolsData);
+      setIsLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, "tools");
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const filteredTools = useMemo(() => {
-    let result = TOOLS.filter((tool) => {
+    let result = tools.filter((tool) => {
       const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          tool.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                          tool.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesCategory = activeCategory === "all" || tool.category === activeCategory;
       
@@ -32,12 +53,12 @@ export default function Home() {
     }
 
     return result;
-  }, [searchQuery, activeCategory, sortBy]);
+  }, [tools, searchQuery, activeCategory, sortBy]);
 
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-24 pb-16 px-4 relative overflow-hidden">
+      <section className="pt-24 pb-16 px-4 relative">
         {/* Background Accents */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none overflow-hidden">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[120px] opacity-50" />
@@ -62,7 +83,7 @@ export default function Home() {
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-            Aura AI is the definitive directory for the world's most powerful AI solutions. Curated by experts, powered by intelligence.
+            AIToolScout is the definitive directory for the world's most powerful AI solutions. Curated by experts, powered by intelligence.
           </p>
           
           <div className="max-w-2xl mx-auto">
@@ -145,7 +166,12 @@ export default function Home() {
           </div>
         </div>
 
-        {filteredTools.length > 0 ? (
+        {isLoading ? (
+          <div className="py-32 text-center">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto text-gray-200 mb-4" />
+            <p className="text-gray-400 font-medium">Curating the best AI tools for you...</p>
+          </div>
+        ) : filteredTools.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTools.map((tool) => (
               <ToolCard key={tool.id} tool={tool} />

@@ -1,20 +1,45 @@
 import { useState } from "react";
-import { ShieldCheck, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { ShieldCheck, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { signInWithGoogle, auth, db } from "@/src/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function AdminLogin() {
-  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // DEMO PASSWORD: 'admin'
-    if (password === "admin") {
-      localStorage.setItem("aitoolscout_admin", "true");
-      navigate("/admin");
-    } else {
-      setError("Invalid password. Hint: it's 'admin' for this demo.");
+  const handleLogin = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const result = await signInWithGoogle();
+      const user = result.user;
+
+      // Check if user is the default admin or has admin role in Firestore
+      const isAdmin = user.email === "shahrukh.khan1766@gmail.com";
+      
+      let hasAdminRole = false;
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().role === "admin") {
+          hasAdminRole = true;
+        }
+      } catch (e) {
+        console.log("Error checking user role, might not have a user doc yet.");
+      }
+
+      if (isAdmin || hasAdminRole) {
+        localStorage.setItem("aitoolscout_admin", "true");
+        navigate("/admin");
+      } else {
+        await auth.signOut();
+        setError("Access denied. You do not have administrator privileges.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -29,20 +54,10 @@ export default function AdminLogin() {
           <p className="text-gray-500 font-medium tracking-wide uppercase text-[10px]">Secure Portal</p>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Access Key</label>
-            <div className="relative">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
-                className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all"
-              />
-            </div>
-          </div>
+        <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 space-y-6">
+          <p className="text-center text-gray-500 text-sm">
+            Please sign in with your administrator account to access the dashboard.
+          </p>
 
           {error && (
             <div className="flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold">
@@ -52,13 +67,20 @@ export default function AdminLogin() {
           )}
 
           <button
-            type="submit"
-            className="w-full py-5 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all flex items-center justify-center gap-3 group"
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="w-full py-5 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all flex items-center justify-center gap-3 group disabled:opacity-50"
           >
-            Unlock Dashboard
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <>
+                Sign in with Google
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
           </button>
-        </form>
+        </div>
 
         <p className="text-center mt-8 text-xs text-gray-400 font-medium">
           Authorized personnel only. All access is logged.

@@ -2,16 +2,19 @@ export interface AITool {
   id: string;
   name: string;
   description: string;
+  longDescription?: string;
   category: string;
   tags: string[];
-  url: string;
+  websiteUrl: string;
   affiliateUrl?: string;
   imageUrl: string;
   isFeatured?: boolean;
   pricing: "Free" | "Freemium" | "Paid";
   rating: number;
   reviewsCount: number;
+  features?: string[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface BlogPost {

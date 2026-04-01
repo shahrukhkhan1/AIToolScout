@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "AITool": {
+      "title": "AI Tool",
+      "description": "A tool in the AI directory.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier." },
+        "name": { "type": "string", "description": "Name of the tool." },
+        "description": { "type": "string", "description": "Short description." },
+        "longDescription": { "type": "string", "description": "Detailed description." },
+        "imageUrl": { "type": "string", "description": "URL of the tool logo/image." },
+        "websiteUrl": { "type": "string", "description": "Official website URL." },
+        "category": { "type": "string", "description": "Category ID (e.g., writing, image)." },
+        "pricing": { "type": "string", "enum": ["Free", "Freemium", "Paid"], "description": "Pricing model." },
+        "rating": { "type": "number", "description": "Average user rating (0-5)." },
+        "reviewsCount": { "type": "integer", "description": "Number of reviews." },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "List of tags." },
+        "features": { "type": "array", "items": { "type": "string" }, "description": "Key features." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." }
+      },
+      "required": ["name", "description", "category", "pricing", "websiteUrl"]
+    }
+  },
+  "firestore": {
+    "/tools/{toolId}": {
+      "schema": "AITool",
+      "description": "Collection of AI tools."
+    }
+  }
+}

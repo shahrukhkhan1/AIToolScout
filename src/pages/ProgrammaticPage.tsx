@@ -1,11 +1,33 @@
 import { useParams, Link } from "react-router-dom";
-import { TOOLS, CATEGORIES } from "@/src/constants";
+import { useState, useEffect, useMemo } from "react";
+import { CATEGORIES } from "@/src/constants";
 import ToolCard from "@/src/components/ui/ToolCard";
 import SEO from "@/src/components/seo/SEO";
-import { CheckCircle, HelpCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, HelpCircle, ArrowRight, Loader2 } from "lucide-react";
+import { db, handleFirestoreError, OperationType } from "@/src/lib/firebase";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { AITool } from "@/src/types";
 
 export default function ProgrammaticPage() {
   const { category: categoryId } = useParams();
+  const [tools, setTools] = useState<AITool[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "tools"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const toolsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as AITool[];
+      setTools(toolsData);
+      setIsLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, "tools");
+    });
+
+    return () => unsubscribe();
+  }, []);
   
   const category = CATEGORIES.find(c => c.id === categoryId?.toLowerCase());
   
@@ -16,25 +38,27 @@ export default function ProgrammaticPage() {
     .join(" ");
   
   // Filter tools based on audience or category
-  const filteredTools = TOOLS.filter(t => {
-    const target = (categoryId || "").toLowerCase();
-    const tCategoryId = t.category.toLowerCase();
-    const tags = t.tags.map(tag => tag.toLowerCase());
-    
-    // Check if audience matches category ID exactly (e.g. /best/image)
-    if (target === tCategoryId) return true;
-    
-    // Check if audience matches name (e.g. /best/writing)
-    const categoryName = CATEGORIES.find(c => c.id === tCategoryId)?.name.toLowerCase() || "";
-    if (target === categoryName) return true;
+  const filteredTools = useMemo(() => {
+    return tools.filter(t => {
+      const target = (categoryId || "").toLowerCase();
+      const tCategoryId = t.category.toLowerCase();
+      const tags = t.tags?.map(tag => tag.toLowerCase()) || [];
+      
+      // Check if audience matches category ID exactly (e.g. /best/image)
+      if (target === tCategoryId) return true;
+      
+      // Check if audience matches name (e.g. /best/writing)
+      const categoryName = CATEGORIES.find(c => c.id === tCategoryId)?.name.toLowerCase() || "";
+      if (target === categoryName) return true;
 
-    const targetClean = target.replace(/-/g, " ");
-    
-    return tCategoryId.includes(targetClean) || 
-           targetClean.includes(tCategoryId) ||
-           tags.some(tag => tag.includes(targetClean)) ||
-           tags.some(tag => targetClean.includes(tag));
-  });
+      const targetClean = target.replace(/-/g, " ");
+      
+      return tCategoryId.includes(targetClean) || 
+             targetClean.includes(tCategoryId) ||
+             tags.some(tag => tag.includes(targetClean)) ||
+             tags.some(tag => targetClean.includes(tag));
+    });
+  }, [tools, categoryId]);
 
   const faqs = [
     { q: `What are the best AI tools for ${audienceName}?`, a: `The best AI tools for ${audienceName} include ChatGPT for writing, Midjourney for creative assets, and specialized coding assistants.` },
@@ -60,7 +84,12 @@ export default function ProgrammaticPage() {
       </section>
 
       <main className="max-w-7xl mx-auto px-4 py-16">
-        {filteredTools.length > 0 ? (
+        {isLoading ? (
+          <div className="py-32 text-center">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto text-gray-200 mb-4" />
+            <p className="text-gray-400 font-medium">Finding the best tools for {audienceName}...</p>
+          </div>
+        ) : filteredTools.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
             {filteredTools.map(tool => <ToolCard key={tool.id} tool={tool} />)}
           </div>
@@ -70,7 +99,7 @@ export default function ProgrammaticPage() {
             <h2 className="text-2xl font-bold text-gray-900">No specific tools found for "{audienceName}"</h2>
             <p className="text-gray-500 mb-8">But here are some of our most popular AI tools instead.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
-              {TOOLS.slice(0, 3).map(tool => <ToolCard key={tool.id} tool={tool} />)}
+              {tools.slice(0, 3).map(tool => <ToolCard key={tool.id} tool={tool} />)}
             </div>
           </div>
         )}
@@ -95,10 +124,10 @@ export default function ProgrammaticPage() {
         <div className="p-12 bg-black text-white rounded-[3rem] text-center">
           <h2 className="text-2xl font-bold mb-6">Explore More AI Categories</h2>
           <div className="flex flex-wrap justify-center gap-4">
-            {["Students", "Developers", "Marketers", "Designers"].map(item => (
+            {["Writing", "Image", "Video", "Code", "Marketing"].map(item => (
               <Link 
                 key={item} 
-                to={`/best-ai-tools-for-${item.toLowerCase()}`}
+                to={`/best/${item.toLowerCase()}`}
                 className="px-6 py-3 bg-white/10 rounded-full hover:bg-white/20 transition-colors flex items-center gap-2"
               >
                 AI for {item} <ArrowRight className="w-4 h-4" />

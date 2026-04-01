@@ -1,11 +1,41 @@
 import { useParams, Link } from "react-router-dom";
-import { TOOLS } from "@/src/constants";
-import { Star, ExternalLink, ArrowLeft, CheckCircle, ShieldCheck, Globe, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, ExternalLink, ArrowLeft, CheckCircle, ShieldCheck, Globe, Zap, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import { db, handleFirestoreError, OperationType } from "@/src/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { AITool } from "@/src/types";
 
 export default function ToolDetail() {
   const { id } = useParams();
-  const tool = TOOLS.find((t) => t.id === id);
+  const [tool, setTool] = useState<AITool | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTool = async () => {
+      if (!id) return;
+      try {
+        const docRef = doc(db, "tools", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setTool({ id: docSnap.id, ...docSnap.data() } as AITool);
+        }
+      } catch (error) {
+        handleFirestoreError(error, OperationType.GET, `tools/${id}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTool();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-black" />
+      </div>
+    );
+  }
 
   if (!tool) {
     return (
@@ -49,7 +79,7 @@ export default function ToolDetail() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Globe className="w-4 h-4" />
-                    {new URL(tool.url).hostname}
+                    {tool.websiteUrl ? new URL(tool.websiteUrl).hostname : "website"}
                   </div>
                 </div>
               </div>
@@ -58,6 +88,7 @@ export default function ToolDetail() {
             <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">About {tool.name}</h2>
               <p>{tool.description}</p>
+              {tool.longDescription && <p>{tool.longDescription}</p>}
               <p>
                 {tool.name} is a powerful tool designed for {tool.category} professionals. 
                 It offers a wide range of features aimed at improving efficiency and output quality.
@@ -65,7 +96,7 @@ export default function ToolDetail() {
               
               <h3 className="text-xl font-bold text-gray-900 mt-8 mb-4">Key Features</h3>
               <ul className="space-y-3 list-none p-0">
-                {["Advanced AI processing", "Intuitive user interface", "Cloud-based synchronization", "API access for developers"].map((feature) => (
+                {(tool.features || ["Advanced AI processing", "Intuitive user interface", "Cloud-based synchronization", "API access for developers"]).map((feature) => (
                   <li key={feature} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-500" />
                     {feature}
@@ -114,7 +145,7 @@ export default function ToolDetail() {
               </div>
 
               <a
-                href={`/go/${tool.id}`}
+                href={tool.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-gray-200 transition-colors"
@@ -130,24 +161,10 @@ export default function ToolDetail() {
             <div className="bg-white border border-gray-100 p-8 rounded-[2.5rem]">
               <h4 className="font-bold mb-4">Tags</h4>
               <div className="flex flex-wrap gap-2 mb-8">
-                {tool.tags.map(tag => (
+                {tool.tags?.map(tag => (
                   <span key={tag} className="px-3 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-full">
                     #{tag}
                   </span>
-                ))}
-              </div>
-
-              <h4 className="font-bold mb-4">Compare with</h4>
-              <div className="space-y-3">
-                {TOOLS.filter(t => t.id !== tool.id && t.category === tool.category).slice(0, 3).map(other => (
-                  <Link 
-                    key={other.id} 
-                    to={`/compare/${tool.id}-vs-${other.id}`}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
-                  >
-                    <img src={other.imageUrl} alt={other.name} className="w-8 h-8 rounded-lg object-cover" />
-                    <span className="text-sm font-bold">{tool.name} vs {other.name}</span>
-                  </Link>
                 ))}
               </div>
             </div>

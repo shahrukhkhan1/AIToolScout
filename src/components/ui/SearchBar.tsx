@@ -61,24 +61,42 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
             exit={{ opacity: 0, y: 10 }}
             className="absolute top-full left-0 right-0 mt-4 p-6 bg-black text-white rounded-3xl shadow-2xl z-40"
           >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-2 text-purple-400">
-                <Sparkles className="w-5 h-5" />
-                <span className="text-sm font-bold uppercase tracking-widest">Aura AI Insights</span>
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 block mb-0.5">AI Analysis</span>
+                  <span className="text-lg font-bold tracking-tight">AIToolScout Insights</span>
+                </div>
               </div>
-              <button onClick={() => setShowAiBox(false)} className="p-1 hover:bg-white/10 rounded-full">
+              <button onClick={() => setShowAiBox(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             {isAiLoading ? (
-              <div className="flex flex-col items-center py-8 gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
-                <p className="text-gray-400 animate-pulse">Consulting the AI directory...</p>
+              <div className="flex flex-col items-center py-12 gap-4">
+                <div className="relative">
+                  <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
+                  <div className="absolute inset-0 blur-lg bg-purple-400/20 animate-pulse" />
+                </div>
+                <p className="text-gray-400 font-medium animate-pulse">Scanning the AI landscape...</p>
               </div>
             ) : (
-              <div className="prose prose-invert max-w-none text-gray-200 leading-relaxed">
-                {aiSuggestion || "No specific insights found for this query."}
+              <div className="space-y-6">
+                <div className="prose prose-invert max-w-none text-gray-200 leading-relaxed text-lg font-medium">
+                  {aiSuggestion || "No specific insights found for this query."}
+                </div>
+                
+                <div className="pt-6 border-t border-white/10 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <span>Powered by Gemini 3.1 Flash</span>
+                  <span className="flex items-center gap-2">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Real-time Data
+                  </span>
+                </div>
               </div>
             )}
           </motion.div>

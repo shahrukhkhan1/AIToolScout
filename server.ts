@@ -3,8 +3,10 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { GoogleGenAI } from "@google/genai";
+import Parser from "rss-parser";
 
 let aiInstance: GoogleGenAI | null = null;
+const parser = new Parser();
 
 function getAI() {
   if (!aiInstance) {
@@ -92,6 +94,134 @@ async function startServer() {
     }
   });
 
+  // Data Automation: Sync Tools
+  app.post("/api/admin/sync/tools", async (req, res) => {
+    const feeds = [
+      "https://www.futurepedia.io/rss.xml",
+      "https://theresanaiforthat.com/rss/"
+    ];
+
+    const results = [];
+    
+    try {
+      for (const url of feeds) {
+        try {
+          const feed = await parser.parseURL(url);
+          results.push(...feed.items.map(item => ({
+            name: item.title,
+            description: item.contentSnippet || item.content,
+            websiteUrl: item.link,
+            source: url.includes("futurepedia") ? "Futurepedia" : "TAAFT",
+            pubDate: item.pubDate
+          })));
+        } catch (e) {
+          console.error(`Failed to fetch feed ${url}:`, e);
+        }
+      }
+
+      // Optional: Product Hunt Sync (Requires Token)
+      const phToken = process.env.PRODUCT_HUNT_TOKEN;
+      if (phToken) {
+        const query = `
+          {
+            posts(topic: "artificial-intelligence", first: 10) {
+              edges {
+                node {
+                  name
+                  tagline
+                  url
+                  createdAt
+                }
+              }
+            }
+          }
+        `;
+        const phRes = await fetch("https://api.producthunt.com/v2/api/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${phToken}`
+          },
+          body: JSON.stringify({ query })
+        });
+        const phData = await phRes.json();
+        if (phData.data?.posts?.edges) {
+          results.push(...phData.data.posts.edges.map((e: any) => ({
+            name: e.node.name,
+            description: e.node.tagline,
+            websiteUrl: e.node.url,
+            source: "Product Hunt",
+            pubDate: e.node.createdAt
+          })));
+        }
+      }
+
+      // Use AI to process and deduplicate
+      const ai = getAI();
+      const processRes = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Process these raw AI tool entries. Deduplicate by name, categorize into (writing, image, video, code, marketing, productivity, audio, business), and return a clean JSON array of tools.
+        Raw Data: ${JSON.stringify(results.slice(0, 20))}`,
+        config: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      const processedTools = JSON.parse(processRes.text);
+      res.json({ success: true, count: processedTools.length, tools: processedTools });
+    } catch (error) {
+      console.error("Sync tools error:", error);
+      res.status(500).json({ error: "Failed to sync tools" });
+    }
+  });
+
+  // Data Automation: Sync Blogs
+  app.post("/api/admin/sync/blogs", async (req, res) => {
+    const feeds = [
+      "https://techcrunch.com/category/artificial-intelligence/feed/",
+      "https://www.theverge.com/rss/ai/index.xml",
+      "https://www.technologyreview.com/topic/artificial-intelligence/feed/"
+    ];
+
+    const results = [];
+    
+    try {
+      for (const url of feeds) {
+        try {
+          const feed = await parser.parseURL(url);
+          results.push(...feed.items.map(item => ({
+            title: item.title,
+            excerpt: item.contentSnippet,
+            content: item.content,
+            author: item.creator || item.author || "AI News",
+            date: item.pubDate,
+            websiteUrl: item.link,
+            source: new URL(url).hostname
+          })));
+        } catch (e) {
+          console.error(`Failed to fetch blog feed ${url}:`, e);
+        }
+      }
+
+      // Use AI to summarize and format
+      const ai = getAI();
+      const processRes = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Summarize these AI news items into blog posts. Return a JSON array with: title, excerpt (short), content (markdown), category (News, Trends, Guides), author, date, slug.
+        Raw Data: ${JSON.stringify(results.slice(0, 10))}`,
+        config: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      const processedBlogs = JSON.parse(processRes.text);
+      res.json({ success: true, count: processedBlogs.length, blogs: processedBlogs });
+    } catch (error) {
+      console.error("Sync blogs error:", error);
+      res.status(500).json({ error: "Failed to sync blogs" });
+    }
+  });
+
   // Bulk CSV Import
   app.post("/api/admin/import", (req, res) => {
     const { data } = req.body; // Expecting array of objects
@@ -152,7 +282,7 @@ Sitemap: ${process.env.APP_URL}/sitemap.xml`);
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Aura AI Server running on http://localhost:${PORT}`);
+    console.log(`AIToolScout Server running on http://localhost:${PORT}`);
   });
 }
 

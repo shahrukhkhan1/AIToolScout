@@ -1,10 +1,35 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BLOG_POSTS } from "@/src/constants";
 import { motion } from "motion/react";
-import { Calendar, User, ArrowRight } from "lucide-react";
+import { Calendar, User, ArrowRight, Loader2 } from "lucide-react";
 import SEO from "@/src/components/seo/SEO";
+import { db, handleFirestoreError, OperationType } from "@/src/lib/firebase";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 
 export default function BlogPage() {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "blog_posts"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const postsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPosts(postsData);
+      setIsLoading(false);
+    }, (error) => {
+      // Fallback to static posts if collection doesn't exist or error occurs
+      console.warn("Falling back to static blog posts:", error);
+      setPosts(BLOG_POSTS);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       <SEO 
@@ -24,54 +49,61 @@ export default function BlogPage() {
       </section>
 
       <main className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {BLOG_POSTS.map((post) => (
-            <motion.article 
-              key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="group cursor-pointer"
-            >
-              <Link to={`/blog/${post.slug}`}>
-                <div className="aspect-[16/9] rounded-[2.5rem] overflow-hidden mb-6 bg-gray-100 relative">
-                  <img 
-                    src={post.imageUrl} 
-                    alt={post.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                    loading="lazy"
-                  />
-                  <div className="absolute top-6 left-6">
-                    <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest shadow-sm">
-                      {post.category}
-                    </span>
+        {isLoading ? (
+          <div className="py-32 text-center">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto text-gray-200 mb-4" />
+            <p className="text-gray-400 font-medium">Loading insights...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {posts.map((post) => (
+              <motion.article 
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group cursor-pointer"
+              >
+                <Link to={`/blog/${post.slug}`}>
+                  <div className="aspect-[16/9] rounded-[2.5rem] overflow-hidden mb-6 bg-gray-100 relative">
+                    <img 
+                      src={post.imageUrl} 
+                      alt={post.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      loading="lazy"
+                    />
+                    <div className="absolute top-6 left-6">
+                      <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest shadow-sm">
+                        {post.category}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-4 text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {post.date}
+                  
+                  <div className="flex items-center gap-4 text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {post.date}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {post.author}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <User className="w-3 h-3" />
-                    {post.author}
-                  </div>
-                </div>
 
-                <h2 className="text-3xl font-black mb-4 group-hover:text-purple-600 transition-colors leading-tight">
-                  {post.title}
-                </h2>
-                <p className="text-gray-500 text-lg leading-relaxed mb-6">
-                  {post.excerpt}
-                </p>
+                  <h2 className="text-3xl font-black mb-4 group-hover:text-purple-600 transition-colors leading-tight">
+                    {post.title}
+                  </h2>
+                  <p className="text-gray-500 text-lg leading-relaxed mb-6">
+                    {post.excerpt}
+                  </p>
 
-                <div className="flex items-center gap-2 text-sm font-bold text-black group-hover:gap-4 transition-all">
-                  Read Full Article <ArrowRight className="w-4 h-4" />
-                </div>
-              </Link>
-            </motion.article>
-          ))}
-        </div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-black group-hover:gap-4 transition-all">
+                    Read Full Article <ArrowRight className="w-4 h-4" />
+                  </div>
+                </Link>
+              </motion.article>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Newsletter Section */}

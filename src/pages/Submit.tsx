@@ -49,7 +49,7 @@ export default function Submit() {
           </div>
           <h2 className="text-3xl font-black mb-4">Submission Received!</h2>
           <p className="text-gray-500 mb-8">
-            Thank you for contributing to Aura AI. Our team will review your submission and notify you via email once it's live.
+            Thank you for contributing to AIToolScout. Our team will review your submission and notify you via email once it's live.
           </p>
           <button 
             onClick={() => setIsSuccess(false)}
