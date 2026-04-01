@@ -5,33 +5,33 @@ import SEO from "@/src/components/seo/SEO";
 import { CheckCircle, HelpCircle, ArrowRight } from "lucide-react";
 
 export default function ProgrammaticPage() {
-  const { audience } = useParams();
+  const { category: categoryId } = useParams();
   
-  const category = CATEGORIES.find(c => c.id === audience?.toLowerCase());
+  const category = CATEGORIES.find(c => c.id === categoryId?.toLowerCase());
   
   // Format audience name: replace hyphens with spaces and capitalize each word
-  const audienceName = category ? category.name : (audience || "")
+  const audienceName = category ? category.name : (categoryId || "")
     .split("-")
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
   
   // Filter tools based on audience or category
   const filteredTools = TOOLS.filter(t => {
-    const target = (audience || "").toLowerCase();
-    const categoryId = t.category.toLowerCase();
+    const target = (categoryId || "").toLowerCase();
+    const tCategoryId = t.category.toLowerCase();
     const tags = t.tags.map(tag => tag.toLowerCase());
     
-    // Check if audience matches category ID exactly (e.g. /best-ai-tools-for-image)
-    if (target === categoryId) return true;
+    // Check if audience matches category ID exactly (e.g. /best/image)
+    if (target === tCategoryId) return true;
     
-    // Check if audience matches name (e.g. /best-ai-tools-for-writing)
-    const categoryName = CATEGORIES.find(c => c.id === categoryId)?.name.toLowerCase() || "";
+    // Check if audience matches name (e.g. /best/writing)
+    const categoryName = CATEGORIES.find(c => c.id === tCategoryId)?.name.toLowerCase() || "";
     if (target === categoryName) return true;
 
     const targetClean = target.replace(/-/g, " ");
     
-    return categoryId.includes(targetClean) || 
-           targetClean.includes(categoryId) ||
+    return tCategoryId.includes(targetClean) || 
+           targetClean.includes(tCategoryId) ||
            tags.some(tag => tag.includes(targetClean)) ||
            tags.some(tag => targetClean.includes(tag));
   });

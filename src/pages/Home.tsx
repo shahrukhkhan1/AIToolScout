@@ -37,27 +37,45 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="pt-24 pb-16 px-4 relative overflow-hidden">
+        {/* Background Accents */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[120px] opacity-50" />
+          <div className="absolute bottom-[10%] right-[-10%] w-[30%] h-[30%] bg-purple-50 rounded-full blur-[100px] opacity-50" />
+        </div>
+
+        <div className="max-w-5xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-500 mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-gray-100 rounded-full text-xs font-bold text-gray-500 mb-8 shadow-sm"
           >
-            <Sparkles className="w-3 h-3 text-black" />
-            DISCOVER THE FUTURE OF PRODUCTIVITY
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="tracking-widest uppercase">The Future of AI Discovery</span>
           </motion.div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight text-gray-900 mb-6 leading-[1.1]">
-            Find the best <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900">
-              AI Tools
-            </span> for your workflow.
+          
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-gray-900 mb-8 leading-[0.95]">
+            Discover the <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600">
+              Next Generation
+            </span> <br /> of AI Tools.
           </h1>
-          <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Aura AI is the most comprehensive directory of AI tools, curated by experts and powered by AI insights.
+          
+          <p className="text-xl md:text-2xl text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+            Aura AI is the definitive directory for the world's most powerful AI solutions. Curated by experts, powered by intelligence.
           </p>
           
-          <SearchBar onSearch={setSearchQuery} />
+          <div className="max-w-2xl mx-auto">
+            <SearchBar onSearch={setSearchQuery} />
+          </div>
+
+          <div className="mt-12 flex flex-wrap justify-center gap-8 text-gray-400 grayscale opacity-50">
+            {/* Mock partner logos */}
+            <span className="text-sm font-black tracking-widest uppercase">OpenAI</span>
+            <span className="text-sm font-black tracking-widest uppercase">Anthropic</span>
+            <span className="text-sm font-black tracking-widest uppercase">Google</span>
+            <span className="text-sm font-black tracking-widest uppercase">Meta</span>
+          </div>
         </div>
       </section>
 

@@ -41,7 +41,7 @@ export default function NotFound() {
           {["Writing", "Design", "Video", "Coding"].map(cat => (
             <Link 
               key={cat} 
-              to={`/best-ai-tools-for-${cat.toLowerCase()}`}
+              to={`/best/${cat.toLowerCase()}`}
               className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-100 transition-colors"
             >
               {cat}

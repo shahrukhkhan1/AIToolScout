@@ -14,26 +14,26 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+        <div className="flex justify-between h-20 items-center">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500 shadow-lg shadow-black/10">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight">AIToolScout</span>
+            <span className="text-2xl font-black tracking-tighter font-display">AIToolScout</span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-10">
             {navLinks.map((link) => (
               <NavLink
                 key={link.path}
                 to={link.path}
                 className={({ isActive }) =>
                   cn(
-                    "text-sm font-medium transition-colors hover:text-black",
-                    isActive ? "text-black" : "text-gray-500"
+                    "text-xs font-black uppercase tracking-widest transition-all hover:text-blue-600",
+                    isActive ? "text-blue-600" : "text-gray-400"
                   )
                 }
               >
@@ -42,7 +42,7 @@ export default function Navbar() {
             ))}
             <Link
               to="/submit"
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-black/5 hover:shadow-blue-600/20"
             >
               <PlusCircle className="w-4 h-4" />
               Submit Tool

@@ -63,7 +63,7 @@ export default function CategoryPage() {
                 </div>
 
                 <Link 
-                  to={`/best-ai-tools-for-${category.id}`}
+                  to={`/best/${category.id}`}
                   className="flex items-center justify-center gap-2 w-full py-4 bg-gray-50 text-black rounded-2xl font-bold hover:bg-black hover:text-white transition-all"
                 >
                   View All {category.name} <ArrowRight className="w-4 h-4" />

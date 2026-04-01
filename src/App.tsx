@@ -48,7 +48,7 @@ export default function App() {
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/submit" element={<Submit />} />
-                <Route path="/best-ai-tools-for-:audience" element={<ProgrammaticPage />} />
+                <Route path="/best/:category" element={<ProgrammaticPage />} />
                 <Route path="/compare/:slug" element={<ComparisonPage />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin" element={
