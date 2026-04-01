@@ -6,6 +6,24 @@ import { CATEGORIES } from "@/src/constants";
 export default function Submit() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [logoName, setLogoName] = useState<string | null>(null);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size must be less than 2MB");
+        return;
+      }
+      setLogoName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,6 +35,7 @@ export default function Submit() {
       website: formData.get("website"),
       category: formData.get("category"),
       description: formData.get("description"),
+      logo: logo,
     };
 
     try {
@@ -28,9 +47,13 @@ export default function Submit() {
       
       if (res.ok) {
         setIsSuccess(true);
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || "Submission failed");
       }
     } catch (err) {
       console.error(err);
+      alert("A server error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,10 +141,31 @@ export default function Submit() {
             />
           </div>
 
-          <div className="p-8 border-2 border-dashed border-gray-200 rounded-3xl text-center hover:border-black transition-colors cursor-pointer group">
-            <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2 group-hover:text-black transition-colors" />
-            <p className="text-sm font-bold text-gray-400 group-hover:text-black">Upload Tool Logo</p>
-            <p className="text-xs text-gray-300 mt-1">PNG, JPG up to 2MB</p>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">Upload Tool Logo</label>
+            <label className="block p-8 border-2 border-dashed border-gray-200 rounded-3xl text-center hover:border-black transition-colors cursor-pointer group relative">
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleLogoChange}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+              {logo ? (
+                <div className="flex items-center justify-center gap-4">
+                  <img src={logo} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-black">{logoName}</p>
+                    <p className="text-xs text-gray-400">Click to change</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2 group-hover:text-black transition-colors" />
+                  <p className="text-sm font-bold text-gray-400 group-hover:text-black">Click to upload logo</p>
+                  <p className="text-xs text-gray-300 mt-1">PNG, JPG up to 2MB</p>
+                </>
+              )}
+            </label>
           </div>
 
           <button

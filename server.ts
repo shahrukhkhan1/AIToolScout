@@ -6,7 +6,6 @@ import { GoogleGenAI } from "@google/genai";
 import Parser from "rss-parser";
 
 let aiInstance: GoogleGenAI | null = null;
-const parser = new Parser();
 
 function getAI() {
   if (!aiInstance) {
@@ -26,8 +25,10 @@ const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 export async function createServer() {
   const app = express();
   const PORT = 3000;
+  const parser = new Parser();
 
-  app.use(express.json());
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
   // Middleware for caching
   const cacheMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -234,13 +235,27 @@ export async function createServer() {
 
   // Submission API
   app.post("/api/submit", (req, res) => {
-    const submission = req.body;
-    console.log("New tool submission:", submission);
-    
-    // MOCK NOTIFICATION: In production, send an email to admin
-    console.log(`[NOTIFICATION] New tool submitted: ${submission.name}. Check admin dashboard to approve.`);
-    
-    res.json({ success: true, message: "Tool submitted for review!" });
+    try {
+      const submission = req.body;
+      if (!submission || !submission.name) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      const payloadSize = JSON.stringify(submission).length;
+      console.log(`New tool submission: ${submission.name} (Size: ${payloadSize} bytes)`);
+      
+      if (payloadSize > 5 * 1024 * 1024) {
+        return res.status(413).json({ error: "Payload too large. Please use a smaller logo." });
+      }
+      
+      // MOCK NOTIFICATION: In production, send an email to admin
+      console.log(`[NOTIFICATION] New tool submitted: ${submission.name}. Check admin dashboard to approve.`);
+      
+      res.json({ success: true, message: "Tool submitted for review!" });
+    } catch (error) {
+      console.error("Submission error:", error);
+      res.status(500).json({ error: "Internal server error during submission" });
+    }
   });
 
   // SEO: Dynamic Sitemap

@@ -151,6 +151,10 @@ export default function AdminDashboard() {
     setSyncResults(null);
     try {
       const res = await fetch(`/api/admin/sync/${type}`, { method: "POST" });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Server responded with ${res.status}: ${errorText.substring(0, 100)}`);
+      }
       const data = await res.json();
       if (data.success) {
         setSyncResults(prev => ({ ...prev, [type]: data[type] }));
