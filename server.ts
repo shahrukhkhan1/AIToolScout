@@ -23,7 +23,7 @@ function getAI() {
 const cache = new Map<string, { data: any; expiry: number }>();
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 
-async function startServer() {
+export async function createServer() {
   const app = express();
   const PORT = 3000;
 
@@ -281,9 +281,15 @@ Sitemap: ${process.env.APP_URL}/sitemap.xml`);
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`AIToolScout Server running on http://localhost:${PORT}`);
-  });
+  return app;
 }
 
-startServer();
+// Only start the server if this file is run directly
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  createServer().then(app => {
+    const PORT = 3000;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`AIToolScout Server running on http://localhost:${PORT}`);
+    });
+  });
+}
