@@ -12,8 +12,10 @@ export default function Submit() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Vercel has a 4.5MB limit for the entire request body. 
+      // Base64 encoding adds ~33% overhead, so we limit to 2MB to be safe.
       if (file.size > 2 * 1024 * 1024) {
-        alert("File size must be less than 2MB");
+        alert("Logo file is too large. Please upload an image smaller than 2MB.");
         return;
       }
       setLogoName(file.name);

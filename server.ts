@@ -162,7 +162,7 @@ export async function createServer() {
       const processRes = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Process these raw AI tool entries. Deduplicate by name, categorize into (writing, image, video, code, marketing, productivity, audio, business), and return a clean JSON array of tools.
-        Raw Data: ${JSON.stringify(results.slice(0, 20))}`,
+        Raw Data: ${JSON.stringify(results.slice(0, 8))}`, // Reduced from 20 to 8 for speed
         config: {
           responseMimeType: "application/json",
         },
@@ -209,7 +209,7 @@ export async function createServer() {
       const processRes = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Summarize these AI news items into blog posts. Return a JSON array with: title, excerpt (short), content (markdown), category (News, Trends, Guides), author, date, slug.
-        Raw Data: ${JSON.stringify(results.slice(0, 10))}`,
+        Raw Data: ${JSON.stringify(results.slice(0, 5))}`, // Reduced from 10 to 5 for speed
         config: {
           responseMimeType: "application/json",
         },
@@ -288,7 +288,8 @@ Sitemap: ${process.env.APP_URL}/sitemap.xml`);
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!process.env.VERCEL) {
+    // Only serve static files if NOT on Vercel (Vercel handles this via vercel.json)
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
